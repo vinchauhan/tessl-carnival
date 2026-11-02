@@ -513,3 +513,40 @@ export function updateVisitor(
   visitor.path = findPath(map, visitor, tile) ?? [];
   visitor.rest = 1;
 }
+
+export const CLOWN_SPEED = 2.6;
+
+/** Every open tile on the midway, grass included, for the clown to run to. */
+export function openTiles(map: MidwayMap): Point[] {
+  const tiles: Point[] = [];
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      if (!isBlocked(map, x, y)) tiles.push({ x, y });
+    }
+  }
+  return tiles;
+}
+
+/** The juggling clown starts on a random open tile, ready to run. */
+export function createClown(map: MidwayMap, random: () => number, tiles = openTiles(map)): Walker {
+  const tile = tiles[Math.floor(random() * tiles.length)];
+  return createWalker({ x: tile.x + 0.5, y: tile.y + 0.5 });
+}
+
+/**
+ * The clown never rests: whenever it gets where it was going, it runs off to
+ * another random open tile, off the paths as well as on them.
+ */
+export function updateClown(
+  map: MidwayMap,
+  clown: Walker,
+  dt: number,
+  random: () => number,
+  tiles = openTiles(map),
+) {
+  if (clown.path.length === 0) {
+    const tile = tiles[Math.floor(random() * tiles.length)];
+    clown.path = findPath(map, clown, tile) ?? [];
+  }
+  followPath(clown, dt, CLOWN_SPEED);
+}

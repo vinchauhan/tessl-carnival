@@ -6,6 +6,7 @@ import {
   drawArch,
   drawBooth,
   drawBunting,
+  drawClown,
   drawCloud,
   drawFloaters,
   drawFrontHedge,
@@ -26,16 +27,19 @@ import {
 } from './render';
 import {
   boothInReach,
+  createClown,
   createVisitors,
   createWalker,
   findPath,
   followPath,
   inputDirection,
   layoutMidway,
+  openTiles,
   pathToBooth,
   strollTiles,
   toScreen,
   toTile,
+  updateClown,
   updateVisitor,
   walk,
   type BoothSlot,
@@ -99,6 +103,8 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
   ];
   const strolls = strollTiles(map);
   const visitors = createVisitors(map, 9, Math.random);
+  const open = openTiles(map);
+  const clown = createClown(map, Math.random, open);
   const clouds: Cloud[] = Array.from({ length: 9 }, (_, i) => ({
     x: i / 9 + Math.random() * 0.08,
     y: Math.random(),
@@ -355,6 +361,12 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
         draw: () => drawWalker(ctx, v, visitorLook(v.look)),
       })),
       {
+        depth: clown.x + clown.y,
+        // The juggled balls fly above the head.
+        box: { ...walkerBox(clown), top: toScreen(clown.x, clown.y).y - 50 },
+        draw: () => drawClown(ctx, clown, t),
+      },
+      {
         depth: playerDepth,
         box: walkerBox(player),
         draw: () => drawWalker(ctx, player, PLAYER_LOOK, true, t),
@@ -421,6 +433,7 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     else player.walking = false;
 
     for (const visitor of visitors) updateVisitor(map, visitor, dt, Math.random, strolls);
+    updateClown(map, clown, dt, Math.random, open);
 
     const reach = boothInReach(map, player);
     if (reach !== inReach) {

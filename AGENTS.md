@@ -135,6 +135,8 @@ You often work on an issue with nobody around to answer questions.
 ## Skills
 
 - `skills/add-carnival-game/SKILL.md`: how to add a new game to the midway.
+- `skills/add-midway-character/SKILL.md`: how to add a character who walks
+  around the midway, such as the juggling clown.
 - `skills/set-up-your-fork/SKILL.md`: turn on Issues, Actions and GitHub Pages
   in a fork, lock it down, and deploy the carnival.
 - `skills/check-workshop-ready/SKILL.md`: check a laptop and fork are ready for

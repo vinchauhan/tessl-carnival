@@ -791,7 +791,15 @@ function person(
   x: number,
   y: number,
   look: Look,
-  options: { swing?: number; back?: boolean; dir?: number; player?: boolean; t?: number } = {},
+  options: {
+    swing?: number;
+    back?: boolean;
+    dir?: number;
+    player?: boolean;
+    t?: number;
+    /** Hands raised, as when juggling. */
+    armsUp?: boolean;
+  } = {},
 ) {
   const swing = options.swing ?? 0;
   const dir = options.dir ?? 1;
@@ -825,11 +833,13 @@ function person(
   ctx.beginPath();
   ctx.roundRect(x - 4, y - 16.5, 8, 9.5, 3);
   ctx.fill();
+  const handY = options.armsUp ? y - 19 : y - 9;
+  const armSwing = options.armsUp ? 1 : swing;
   stroke(
     ctx,
     [
       [x - 4, y - 15],
-      [x - 5 - swing, y - 9],
+      [x - 5 - armSwing, handY],
     ],
     look.skin,
     2,
@@ -838,7 +848,7 @@ function person(
     ctx,
     [
       [x + 4, y - 15],
-      [x + 5 + swing, y - 9],
+      [x + 5 + armSwing, handY],
     ],
     look.skin,
     2,
@@ -1624,6 +1634,67 @@ export function drawWalker(ctx: Ctx, walker: Walker, look: Look, player = false,
     dir: walker.flipped ? -1 : 1,
     player,
     t,
+  });
+}
+
+// The juggling clown: a baggy two-tone suit, white face paint, a red nose,
+// a frilly collar and a cone hat, with three balls in the air.
+const CLOWN_LOOK: Look = {
+  skin: palette.white,
+  hair: palette.pink,
+  shirt: palette.blue,
+  pants: palette.gold,
+};
+const JUGGLE_BALLS = [palette.red, palette.gold, palette.sky2] as const;
+
+export function drawClown(ctx: Ctx, clown: Walker, t: number) {
+  const p = toScreen(clown.x, clown.y);
+  const back = clown.facing === 'back';
+  const dir = clown.flipped ? -1 : 1;
+  // Hands stay up for juggling, so only the legs swing.
+  const swing = clown.walking ? Math.sin(clown.stride * Math.PI * 2.2) : 0;
+  person(ctx, p.x, p.y, CLOWN_LOOK, { swing, back, dir, armsUp: true });
+
+  // Polka dots on the suit, and a ruff at the neck.
+  for (const [dx, dy] of [
+    [-1.8, -14],
+    [1.6, -12],
+    [-1, -9.5],
+  ] as const)
+    oval(ctx, p.x + dx, p.y + dy, 0.9, 0.9, palette.red);
+  for (let i = -2; i <= 2; i++) oval(ctx, p.x + i * 1.6, p.y - 16.5, 1.4, 1.1, palette.cream);
+
+  // Big shoes.
+  oval(ctx, p.x - 2 + swing * 1.6 - 0.6, p.y - 0.6, 2.4, 1.2, palette.red);
+  oval(ctx, p.x + 2 - swing * 1.6 + 0.6, p.y - 0.6, 2.4, 1.2, palette.red);
+
+  if (!back) {
+    // A red nose and a wide red smile.
+    oval(ctx, p.x + dir * 1.2, p.y - 19.4, 1.2, 1.2, palette.red);
+    ctx.strokeStyle = palette.redShade;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(p.x + dir, p.y - 18.6, 1.8, Math.PI * 0.2, Math.PI * 0.8);
+    ctx.stroke();
+  }
+  // A cone hat with a pompom.
+  poly(
+    ctx,
+    [
+      [p.x - 3, p.y - 23.5],
+      [p.x + 3, p.y - 23.5],
+      [p.x + dir, p.y - 31],
+    ],
+    palette.red,
+  );
+  oval(ctx, p.x + dir, p.y - 31, 1.3, 1.3, palette.cream);
+
+  // The balls go round in a cascade over the head.
+  JUGGLE_BALLS.forEach((color, i) => {
+    const phase = (t * 1.4 + i / JUGGLE_BALLS.length) % 1;
+    const bx = p.x + Math.cos(phase * Math.PI * 2) * 6;
+    const by = p.y - 20 - Math.abs(Math.sin(phase * Math.PI * 2)) * 14;
+    oval(ctx, bx, by, 1.6, 1.6, color);
   });
 }
 
