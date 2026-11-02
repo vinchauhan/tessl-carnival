@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   boothInReach,
   canStand,
+  createClown,
   createVisitors,
   createWalker,
   findPath,
@@ -13,6 +14,7 @@ import {
   seededRandom,
   toScreen,
   toTile,
+  updateClown,
   updateVisitor,
   walk,
 } from './world';
@@ -179,5 +181,29 @@ describe('visitors', () => {
       expect(isBlocked(map, Math.floor(visitor.x), Math.floor(visitor.y))).toBe(false);
       expect(visitor.stride).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('the clown', () => {
+  it('runs all over the midway without walking into anything', () => {
+    const map = layoutMidway(['water-cannon']);
+    const random = seededRandom(2);
+    const clown = createClown(map, random);
+    const visited = new Set<string>();
+    for (let i = 0; i < 1800; i++) {
+      updateClown(map, clown, 1 / 30, random);
+      expect(canStand(map, clown.x, clown.y, 0)).toBe(true);
+      visited.add(`${Math.floor(clown.x)},${Math.floor(clown.y)}`);
+    }
+    expect(clown.stride).toBeGreaterThan(50);
+    expect(visited.size).toBeGreaterThan(40);
+  });
+
+  it('heads somewhere new as soon as it arrives', () => {
+    const map = layoutMidway(['water-cannon']);
+    const random = seededRandom(3);
+    const clown = createClown(map, random);
+    updateClown(map, clown, 1 / 30, random);
+    expect(clown.walking).toBe(true);
   });
 });
